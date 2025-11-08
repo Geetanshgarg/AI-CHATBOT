@@ -27,7 +27,7 @@ app.use("/api/chat/", chatRoutes);
 // Connections and Listeners
 mongoose
 	.connect(
-		`mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@new-cluster.syllbdh.mongodb.net/ai-chat-bot`
+		`${process.env.MONGODB_URI}`
 	)
 	.then(() => {
 		app.listen(process.env.PORT || 5000);

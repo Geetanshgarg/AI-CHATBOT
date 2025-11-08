@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import User from "../models/user-model.js";
-import { configureOpenAI } from "../configs/open-ai-config.js";
-import { ChatCompletionRequestMessage, OpenAIApi } from "openai";
+import { configureGemini } from "../configs/gemini-config.js";
 
 export const generateChatCompletion = async (
 	req: Request,
@@ -17,29 +16,35 @@ export const generateChatCompletion = async (
 		}
 
 		// grab chats of users
-
 		const chats = user.chats.map(({ role, content }) => ({
 			role,
 			content,
-		})) as ChatCompletionRequestMessage[];
+		}));
 		chats.push({ content: message, role: "user" });
 
 		// save chats inside real user object
 		user.chats.push({ content: message, role: "user" });
 
-		// send all chats with new ones to OpenAI API
-		const config = configureOpenAI();
-		const openai = new OpenAIApi(config);
+		// send all chats with new ones to Gemini API
+		const genAI = configureGemini();
+		const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-		// make request to openAi
-		// get latest response
-		const chatResponse = await openai.createChatCompletion({
-			model: "gpt-3.5-turbo",
-			messages: chats,
-		});
+		// Build chat history for Gemini (convert to Gemini format)
+		const history = chats.slice(0, -1).map((chat) => ({
+			role: chat.role === "user" ? "user" : "model",
+			parts: [{ text: chat.content }],
+		}));
+
+		// Start chat with history
+		const chat = model.startChat({ history });
+
+		// Send the latest message
+		const result = await chat.sendMessage(message);
+		const response = await result.response;
+		const responseText = response.text();
 
 		// push latest response to db
-		user.chats.push(chatResponse.data.choices[0].message);
+		user.chats.push({ content: responseText, role: "assistant" });
 		await user.save();
 
 		return res.status(200).json({ chats: user.chats });

@@ -68,6 +68,8 @@ const Chat = () => {
 	const sendMsgHandler = async () => {
 		const content = inputRef.current?.value as string;
 
+		if (!content || content.trim() === "") return;
+
 		if (inputRef.current) inputRef.current.value = "";
 
 		const newMessage: Message = { role: "user", content };
@@ -78,6 +80,13 @@ const Chat = () => {
 		const chatData = await postChatRequest(content);
 		setChatMessages([...chatData.chats]);
 		setIsLoading(false);
+	};
+
+	const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+		if (e.key === "Enter" && !e.shiftKey) {
+			e.preventDefault();
+			sendMsgHandler();
+		}
 	};
 
 	const deleteChatsToggle = () => {
@@ -213,6 +222,7 @@ const Chat = () => {
                         rows={1}
 						disabled={isLoadingChats || isLoading ? true : false}
 						placeholder='Enter your query here'
+						onKeyDown={handleKeyDown}
 					/>
 					<button className={styles.icon} onClick={sendMsgHandler}>
 						<img alt='icon' src={sendIcon} />

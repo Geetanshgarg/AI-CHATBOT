@@ -34,7 +34,7 @@ const ChatItem = (props: Props) => {
 		<div className={`${styles.parent} ${styles.user_parent}`}>
 			<div className={`${styles.avatar} ${styles.user_avatar}`}>
 				{auth?.user?.name[0]}
-				{auth?.user?.name.split(" ")[1][0]}
+				{auth?.user?.name.split(" ")[1]?.[0] || ""}
 			</div>
 			<div className={styles.msg}>
 				<p>{props.content}</p>
